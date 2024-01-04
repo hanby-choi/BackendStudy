@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 from django.views.decorators.csrf import csrf_exempt
 
 topics = [
@@ -6,6 +6,7 @@ topics = [
     {'id': 2, 'title': 'view', 'body': 'View is...'},
     {'id': 3, 'title': 'model', 'body': 'Model is...'}
 ]
+nextId = 4
 
 def HTMLTemplate(articleTag):
     global topics 
@@ -35,15 +36,27 @@ def index(request):
     '''
     return HttpResponse(HTMLTemplate(article))
 
+@csrf_exempt
 def create(request):
-    article = '''
-        <form action="/create/" method="post">
-            <p><input type="text" name="title" placeholder="title"></p>
-            <p><textarea name="body" placeholder="body"></textarea></p>
-            <p><input type="submit"></p>
-        </form>
-    '''
-    return HttpResponse(HTMLTemplate(article))
+    global nextId
+    print('request.method', request.method)
+    if request.method == 'GET':
+        article = '''
+            <form action="/create/" method="post">
+                <p><input type="text" name="title" placeholder="title"></p>
+                <p><textarea name="body" placeholder="body"></textarea></p>
+                <p><input type="submit"></p>
+            </form>
+        '''
+        return HttpResponse(HTMLTemplate(article))
+    elif request.method == 'POST':
+        title = request.POST['title']
+        body = request.POST['body']
+        newTopic = {"id": nextId, "title": title, "body": body}
+        topics.append(newTopic)
+        url = '/read/' + str(nextId)
+        nextId += 1
+        return redirect(url)
 
 def read(request, id):
     global topics
