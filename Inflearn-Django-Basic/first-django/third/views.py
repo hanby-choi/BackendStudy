@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from third.models import Restaurant, Review
 from django.core.paginator import Paginator
-from third.forms import RestaurantForm, ReviewForm
+from third.forms import RestaurantForm, ReviewForm, UpdateRestaurantForm
 from django.http import HttpResponseRedirect
 from django.db.models import Count, Avg
 
@@ -29,8 +29,9 @@ def update(request):
     if request.method == 'POST' and 'id' in request.POST:
         # item = Restaurant.objects.get(pk=request.POST.get('id'))
         item = get_object_or_404(Restaurant, pk=request.POST.get('id'))
-        form = RestaurantForm(request.POST, instance=item)
-        if form.is_valid():
+        password = request.POST.get('password', '')
+        form = UpdateRestaurantForm(request.POST, instance=item)
+        if form.is_valid() and password == item.password:
             item = form.save()
     elif request.method == 'GET':
         # item = Restaurant.objects.get(pk=request.GET.get('id')) ## third/update?id=2
@@ -46,11 +47,14 @@ def detail(request, id):
         return render(request, 'third/detail.html', {'item': item, 'reviews': reviews})
     return HttpResponseRedirect('/third/list/')
 
-def delete(request):
-    if 'id' in request.GET:
-        item = get_object_or_404(Restaurant, pk=request.GET.get('id'))
-        item.delete()
-    return HttpResponseRedirect('/third/list/')
+def delete(request, id):
+    item = get_object_or_404(Restaurant, pk=id)
+    if request.method == 'POST' and 'password' in request.POST:
+        if item.password == request.POST.get('password') or item.password is None:
+            item.delete()
+            return redirect('list')
+        return redirect('restaurant-detail', id=id)
+    return render(request, 'third/delete.html', {'item': item})
 
 def review_create(request, restaurant_id):
     if request.method == 'POST':
