@@ -1,2 +1,2 @@
 Django==5.0.1
-pytz @ file:///C:/b/abs_19q3ljkez4/croot/pytz_1695131651401/work
+pytz==2019.3
